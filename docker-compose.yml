@@ -1,0 +1,40 @@
+version: "3.7"
+services:
+  db:
+    image: mysql:8.0.31
+    container_name: kirari_kawaii
+    restart: always
+    volumes:
+      - db-volume:/var/lib/mysql
+      - ./docker:/etc/mysql/conf.d/
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - test
+    ports:
+      - "3306:3306"
+  api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: "npm run start:dev"
+    ports:
+      - "8000:3000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    tty: true
+    stdin_open: true
+    networks:
+      - test
+
+networks:
+  test:
+    name: test
+    external: true
+  
+volumes:
+  db-volume:
+    driver: local
