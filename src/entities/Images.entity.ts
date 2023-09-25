@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ schema: 'kirari', name: 'images' }) // schema: database_name, name: table_name
+@Entity({ schema: process.env.DB_DATABASE_NAME, name: 'images' }) // schema: database_name, name: table_name
 export class Images {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;

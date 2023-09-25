@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ResponseStatus, ImagePreview, UploadForm } from '@src/types/';
-import * as AWS from 'aws-sdk';
+import { S3, Credentials } from 'aws-sdk';
 import { Repository } from 'typeorm';
 import { Images } from '@src/entities/Images.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,13 +9,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class AppService {
   @InjectRepository(Images)
   private readonly imageEntityRepository: Repository<Images>;
-  private readonly awsS3: AWS.S3;
+  private readonly awsS3: S3;
   constructor() {
-    this.awsS3 = new AWS.S3();
+    this.awsS3 = new S3();
     this.awsS3.config.update({
-      credentials: new AWS.Credentials(
-        process.env.AWS_S3_ACCESS_KEY,
-        process.env.AWS_S3_SECRET_KEY,
+      credentials: new Credentials(
+        process.env.AWS_ACCESS_KEY_ID,
+        process.env.AWS_SECRET_ACCESS_KEY,
       ),
       region: process.env.AWS_S3_REGION,
     });
@@ -24,19 +24,19 @@ export class AppService {
     return 'Hello Kirari!';
   }
   async uploadImage(
-    file: Express.Multer.File,
+    image: Express.Multer.File,
     body: UploadForm,
   ): Promise<ResponseStatus> {
-    const url = `original/${file.originalname}`;
-    const previewUrl = `preview/resized-${file.originalname}`;
+    const url = `original/${image.originalname}`;
+    const previewUrl = `preview/resized-${image.originalname}`;
     // s3 save
     await this.awsS3
       .putObject({
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Key: url,
-        Body: file.buffer,
+        Body: image.buffer,
         ACL: 'public-read',
-        ContentType: file.mimetype,
+        ContentType: image.mimetype,
       })
       .promise();
     // db save
@@ -64,11 +64,11 @@ export class AppService {
   }
   async updateImage(
     id: number,
-    file: Express.Multer.File,
+    image: Express.Multer.File,
     body: UploadForm,
   ): Promise<ResponseStatus> {
-    const url = `original/${file.originalname}`;
-    const previewUrl = `preview/resized-${file.originalname}`;
+    const url = `original/${image.originalname}`;
+    const previewUrl = `preview/resized-${image.originalname}`;
     const entity = await this.imageEntityRepository.findOneBy({ id });
     // s3 delete
     await this.awsS3
@@ -88,9 +88,9 @@ export class AppService {
       .putObject({
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Key: url,
-        Body: file.buffer,
+        Body: image.buffer,
         ACL: 'public-read',
-        ContentType: file.mimetype,
+        ContentType: image.mimetype,
       })
       .promise();
     // db save

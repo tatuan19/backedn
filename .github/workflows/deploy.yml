@@ -1,0 +1,67 @@
+# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.11.0]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - name: ✅ checkout source code. ✅
+        uses: actions/checkout@v3
+
+      - name: ⚙️ ${{ matrix.node-version }} version node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: ⚙️ set env
+        working-directory: ./
+        run: |
+          pwd
+          touch .env
+          echo FRONTEND_HOST=${{ secrets.FRONTEND_HOST }} >> .env
+          echo FRONTEND_PORT=${{ secrets.FRONTEND_PORT }} >> .env
+          echo DB_HOST=${{ secrets.DB_HOST }} >> .env
+          echo DB_USER=${{ secrets.DB_USER }} >> .env
+          echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
+          echo DB_DATABASE_NAME=${{ secrets.DB_DATABASE_NAME }} >> .env
+          echo AWS_S3_REGION=${{ secrets.AWS_S3_REGION }} >> .env
+          echo AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }} >> .env
+          echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .env
+          echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .env
+          cat .env
+
+      - name: ✨ package install ✨
+        working-directory: ./
+        run: npm install
+        
+      - name: ✨ build ✨
+        working-directory: ./
+        run: npm run build
+
+      - name: 📦 builded code packing 📦
+        run: zip -r backend.zip ./dist ./scripts ./appspec.yml ./.env ./package.json
+
+      - name: 🌎 AWS connect 🌎
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: 🦖 zipped code upload to S3 🦖
+        run: aws s3 cp --region ap-northeast-1 ./backend.zip s3://${{ secrets.AWS_S3_BUCKET_NAME }}/backend/backend.zip --source .
+
+      - name: 🚀 deploy with AWS codeDeploy 🚀
+        run: aws deploy create-deployment --application-name ${{ secrets.AWS_CODE_DEPLOY_APPLICATION }} --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name ${{ secrets.AWS_CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} --description "image resize backend" --s3-location bucket=${{ secrets.AWS_S3_BUCKET_NAME }},bundleType=zip,key=backend/backend.zip

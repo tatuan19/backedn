@@ -13,6 +13,7 @@ const config: TypeOrmModuleOptions = {
   database: process.env.DB_DATABASE_NAME,
   entities: [Images],
   synchronize: true,
+  migrations: ['./src/databases/migrations/*.js'],
 };
 
 export default config;
