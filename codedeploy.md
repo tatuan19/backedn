@@ -26,18 +26,17 @@ sudo apt-get update
 
 sudo apt-get install -y nodejs
 
-<!-- sudo apt-get purge nodejs -->
-
-<!-- sudo apt-get autoremove -->
-
 node -v
 
 npm -v
 
-sudo apt-get install build-essential
-
 ```
 node version が低いとき
+# node 削除
+sudo apt-get purge nodejs
+
+sudo apt-get autoremove
+
 # nvm install
 
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
@@ -48,6 +47,9 @@ export NVM_DIR="$HOME/.nvm"
 
 nvm install --lts
 ```
+
+# 基本的なツール install
+sudo apt-get install build-essential
 
 # pm2 install
 sudo npm install -g pm2
