@@ -47,7 +47,7 @@ export class AppController {
     return await this.appService.getImageDetail(id);
   }
 
-  @Put('updateImage')
+  @Put('updateImage/:id')
   async updateImage(
     @Param('id') id: number,
     @UploadedFile() file: Express.Multer.File,
