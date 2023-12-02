@@ -14,6 +14,27 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 free -m
 ```
+# install NginX
+```
+sudo apt-get install nginx
+```
+```
+sudo vi /etc/nginx/sites-enabled/default
+```
+```vim
+# line 52
+proxy_set_header HOST $host;
+proxy_pass http://127.0.0.1:3000;
+proxy_redirect off;
+```
+```
+# 文法エラーチェック
+sudo nginx -t
+```
+```
+# nginx restart
+sudo systemctl restart nginx
+```
 # install node
 ```
 sudo apt-get update -y
